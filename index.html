@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora de logica proposicional</title>
+    <style>
+      :root {
+        --bg-top: #f5efe2;
+        --bg-bottom: #dce8f7;
+        --paper: rgba(255, 255, 255, 0.92);
+        --paper-strong: #ffffff;
+        --line: #c7d3e0;
+        --text: #162033;
+        --muted: #56647a;
+        --accent: #0f766e;
+        --accent-strong: #0b5e58;
+        --accent-soft: #d4f3ef;
+        --danger: #be123c;
+        --danger-soft: #ffe4ec;
+        --shadow: 0 24px 60px rgba(22, 32, 51, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.65), transparent 28%),
+          radial-gradient(circle at 85% 10%, rgba(15, 118, 110, 0.12), transparent 18%),
+          linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 80%);
+      }
+
+      main {
+        width: min(1160px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: fit-content;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        color: var(--accent-strong);
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(15, 118, 110, 0.14);
+        backdrop-filter: blur(8px);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.4rem, 5vw, 4rem);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 72ch;
+        font-size: 1.06rem;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .card {
+        background: var(--paper);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .card-body {
+        padding: 22px;
+      }
+
+      .card-title {
+        margin: 0 0 20px;
+        font-size: 1.2rem;
+        letter-spacing: -0.02em;
+      }
+
+      .section-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .formula-input,
+      .selector {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper-strong);
+        color: var(--text);
+        font: inherit;
+        transition: 180ms ease;
+      }
+
+      .formula-input {
+        padding: 14px 16px;
+        font-size: 1rem;
+      }
+
+      .selector {
+        padding: 12px 14px;
+      }
+
+      .formula-input:focus,
+      .selector:focus {
+        outline: none;
+        border-color: rgba(15, 118, 110, 0.55);
+        box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+      }
+
+      .help {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .input-tools {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(199, 211, 224, 0.72);
+      }
+
+      .tool-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .tool-title {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+
+      .tool-hint {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .tool-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .tool-button {
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper-strong);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        padding: 11px 10px;
+        min-height: 54px;
+        display: grid;
+        gap: 2px;
+        justify-items: center;
+        align-content: center;
+        transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+      }
+
+      .tool-button:hover,
+      .tool-button:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(15, 118, 110, 0.35);
+        color: var(--accent-strong);
+        box-shadow: 0 10px 20px rgba(15, 118, 110, 0.08);
+      }
+
+      .tool-button strong {
+        font-size: 1.02rem;
+        line-height: 1;
+      }
+
+      .tool-button span {
+        font-size: 0.74rem;
+        color: var(--muted);
+      }
+
+      .tool-button--action {
+        background: linear-gradient(180deg, #fbfcfe, #eef4fb);
+      }
+
+      .selectors {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .chip,
+      .primary-button {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        font: inherit;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+      }
+
+      .chip {
+        padding: 11px 14px;
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .chip:hover,
+      .chip:focus-visible {
+        color: var(--accent-strong);
+        border-color: rgba(15, 118, 110, 0.35);
+        transform: translateY(-1px);
+      }
+
+      .primary-button {
+        width: 100%;
+        margin-top: 20px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        font-weight: 700;
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--accent), #14b8a6);
+        box-shadow: 0 14px 30px rgba(15, 118, 110, 0.22);
+      }
+
+      .primary-button:hover,
+      .primary-button:focus-visible {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(15, 118, 110, 0.28);
+      }
+
+      .stack {
+        display: grid;
+        gap: 24px;
+      }
+
+      .result-banner {
+        padding: 18px 20px;
+        border-radius: 22px;
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .result-banner.good {
+        background: var(--accent-soft);
+        border-color: rgba(15, 118, 110, 0.18);
+      }
+
+      .result-banner.bad {
+        background: var(--danger-soft);
+        border-color: rgba(190, 18, 60, 0.18);
+      }
+
+      .result-label {
+        margin: 0 0 4px;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .result-value {
+        margin: 0;
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .good .result-value {
+        color: var(--accent-strong);
+      }
+
+      .bad .result-value {
+        color: var(--danger);
+      }
+
+      .step-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .step {
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.76);
+        border: 1px solid rgba(199, 211, 224, 0.8);
+      }
+
+      .step small {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .step strong {
+        display: block;
+        font-size: 1.02rem;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+
+      .error-box {
+        padding: 18px 20px;
+        border-radius: 22px;
+        color: #9a3412;
+        background: #fff3e1;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+      }
+
+      .error-box strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 340px;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        text-align: center;
+        border: 1px solid var(--line);
+      }
+
+      th {
+        background: rgba(215, 228, 242, 0.75);
+        font-size: 0.92rem;
+      }
+
+      td:last-child {
+        font-weight: 800;
+      }
+
+      .footer-note {
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .right-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .badge {
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.86rem;
+        font-weight: 700;
+        background: rgba(22, 32, 51, 0.06);
+        color: var(--muted);
+      }
+
+      @media (max-width: 930px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 620px) {
+        body {
+          background:
+            radial-gradient(circle at top left, rgba(255, 255, 255, 0.65), transparent 34%),
+            linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+        }
+
+        main {
+          width: min(100% - 20px, 1160px);
+          padding-top: 20px;
+        }
+
+        .card-body {
+          padding: 18px;
+        }
+
+        .selectors {
+          grid-template-columns: 1fr;
+        }
+
+        .tool-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .result-banner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <span class="eyebrow">Logica proposicional interactiva</span>
+        <h1>Calculadora visual para p, q y r</h1>
+        <p>
+          Escribi una formula, elegi los valores de verdad y mirá el desarrollo paso a paso.
+          La interfaz acepta tanto simbolos logicos como operadores de teclado para que quede
+          comoda en clase, en estudio o para compartir online.
+        </p>
+      </section>
+
+      <section class="layout">
+        <article class="card">
+          <div class="card-body">
+            <h2 class="card-title">Entrada</h2>
+
+            <label class="section-label" for="formula">Formula</label>
+            <input
+              class="formula-input"
+              id="formula"
+              type="text"
+              spellcheck="false"
+              value=""
+              placeholder="Ej: (p ∧ q) → r"
+            />
+            <p class="help">
+              Podes usar: ¬ o !, ∧ o &&, ∨ o ||, → o ->, ↔ o <->. Tambien acepta
+              atajos como <strong>iff</strong>, <strong>and</strong>, <strong>or</strong>,
+              <strong>not</strong> y frases como <strong>p y q</strong>, <strong>no p</strong>,
+              <strong>p si y solo si q</strong>, V, F y T.
+            </p>
+
+            <div class="input-tools">
+              <div class="tool-header">
+                <p class="tool-title">Botones rapidos</p>
+                <span class="tool-hint">Insertan justo donde esta el cursor</span>
+              </div>
+              <div class="tool-grid" id="tool-grid"></div>
+            </div>
+
+            <div class="selectors">
+              <label>
+                <span class="section-label">p</span>
+                <select class="selector" id="value-p">
+                  <option value="V">V</option>
+                  <option value="F">F</option>
+                </select>
+              </label>
+              <label>
+                <span class="section-label">q</span>
+                <select class="selector" id="value-q">
+                  <option value="V">V</option>
+                  <option value="F" selected>F</option>
+                </select>
+              </label>
+              <label>
+                <span class="section-label">r</span>
+                <select class="selector" id="value-r">
+                  <option value="V" selected>V</option>
+                  <option value="F">F</option>
+                </select>
+              </label>
+            </div>
+
+            <div>
+              <span class="section-label">Ejemplos</span>
+              <div class="examples" id="example-list"></div>
+            </div>
+
+            <button class="primary-button" id="toggle-table" type="button">
+              Mostrar tabla de verdad
+            </button>
+          </div>
+        </article>
+
+        <div class="stack">
+          <article class="card">
+            <div class="card-body">
+              <div class="right-header">
+                <h2 class="card-title" style="margin: 0;">Resultado</h2>
+                <span class="badge" id="status-badge">Actualizacion automatica</span>
+              </div>
+
+              <div id="result-area"></div>
+            </div>
+          </article>
+
+          <article class="card" id="table-card" hidden>
+            <div class="card-body">
+              <div class="right-header">
+                <h2 class="card-title" style="margin: 0;">Tabla de verdad</h2>
+                <span class="badge">Se genera segun la formula</span>
+              </div>
+
+              <div class="table-wrap" id="table-wrap"></div>
+              <p class="footer-note">
+                La tabla cambia automaticamente segun las variables presentes en la formula.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const SYMBOLS = {
+        NOT: "\u00AC",
+        AND: "\u2227",
+        OR: "\u2228",
+        IMP: "\u2192",
+        IFF: "\u2194",
+      };
+
+      const OPERATORS = {
+        NOT: "NOT",
+        AND: "AND",
+        OR: "OR",
+        IMP: "IMP",
+        IFF: "IFF",
+      };
+
+      const PRECEDENCE = {
+        [OPERATORS.NOT]: 5,
+        [OPERATORS.AND]: 4,
+        [OPERATORS.OR]: 3,
+        [OPERATORS.IMP]: 2,
+        [OPERATORS.IFF]: 1,
+      };
+
+      const elements = {
+        formula: document.getElementById("formula"),
+        p: document.getElementById("value-p"),
+        q: document.getElementById("value-q"),
+        r: document.getElementById("value-r"),
+        resultArea: document.getElementById("result-area"),
+        tableCard: document.getElementById("table-card"),
+        tableWrap: document.getElementById("table-wrap"),
+        toggleTable: document.getElementById("toggle-table"),
+        exampleList: document.getElementById("example-list"),
+        toolGrid: document.getElementById("tool-grid"),
+        statusBadge: document.getElementById("status-badge"),
+      };
+
+      const examples = [
+        `(p ${SYMBOLS.AND} q) ${SYMBOLS.IMP} r`,
+        `${SYMBOLS.NOT}p ${SYMBOLS.OR} q`,
+        `(p ${SYMBOLS.IFF} q) ${SYMBOLS.AND} r`,
+        `p ${SYMBOLS.AND} (q ${SYMBOLS.OR} r)`,
+        `(p ${SYMBOLS.IMP} q) ${SYMBOLS.IFF} (${SYMBOLS.NOT}r)`,
+      ];
+
+      let showTable = false;
+      let formulaSelection = { start: 0, end: 0 };
+      const toolButtons = [
+        { type: "insert", label: SYMBOLS.NOT, detail: "no", value: SYMBOLS.NOT },
+        { type: "insert", label: SYMBOLS.AND, detail: "y", value: ` ${SYMBOLS.AND} ` },
+        { type: "insert", label: SYMBOLS.OR, detail: "o", value: ` ${SYMBOLS.OR} ` },
+        { type: "insert", label: SYMBOLS.IMP, detail: "implica", value: ` ${SYMBOLS.IMP} ` },
+        { type: "insert", label: SYMBOLS.IFF, detail: "sii", value: ` ${SYMBOLS.IFF} ` },
+        { type: "insert", label: "(", detail: "abre", value: "(" },
+        { type: "insert", label: ")", detail: "cierra", value: ")" },
+        { type: "insert", label: "p", detail: "var", value: "p" },
+        { type: "insert", label: "q", detail: "var", value: "q" },
+        { type: "insert", label: "r", detail: "var", value: "r" },
+        { type: "action", label: "⌫", detail: "borrar", action: "backspace" },
+        { type: "action", label: "Limpiar", detail: "todo", action: "clear" },
+      ];
+
+      function saveFormulaSelection() {
+        formulaSelection = {
+          start: elements.formula.selectionStart ?? elements.formula.value.length,
+          end: elements.formula.selectionEnd ?? elements.formula.value.length,
+        };
+      }
+
+      function setSelectionAndFocus(start, end = start) {
+        elements.formula.focus();
+        elements.formula.setSelectionRange(start, end);
+        saveFormulaSelection();
+      }
+
+      function insertAtCursor(text) {
+        const start = formulaSelection.start ?? elements.formula.value.length;
+        const end = formulaSelection.end ?? start;
+        elements.formula.focus();
+        elements.formula.setSelectionRange(start, end);
+        elements.formula.setRangeText(text, start, end, "end");
+        saveFormulaSelection();
+        render();
+      }
+
+      function backspaceAtCursor() {
+        const start = formulaSelection.start ?? elements.formula.value.length;
+        const end = formulaSelection.end ?? start;
+
+        if (start !== end) {
+          elements.formula.setSelectionRange(start, end);
+          elements.formula.setRangeText("", start, end, "end");
+        } else if (start > 0) {
+          elements.formula.setSelectionRange(start - 1, start);
+          elements.formula.setRangeText("", start - 1, start, "end");
+        }
+
+        saveFormulaSelection();
+        render();
+      }
+
+      function clearFormula() {
+        elements.formula.value = "";
+        setSelectionAndFocus(0);
+        render();
+      }
+
+      function normalizeInput(input) {
+        return input
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .replace(/\b(si\s*y\s*(solo|solamente)\s*si|iff|sii)\b/gi, SYMBOLS.IFF)
+          .replace(/\b(entonces|implica|then|imp)\b/gi, SYMBOLS.IMP)
+          .replace(/\b(and|y)\b/gi, SYMBOLS.AND)
+          .replace(/\b(or|o)\b/gi, SYMBOLS.OR)
+          .replace(/\b(not|no)\b/gi, SYMBOLS.NOT)
+          .replace(/<=>/g, SYMBOLS.IFF)
+          .replace(/<->/g, SYMBOLS.IFF)
+          .replace(/->/g, SYMBOLS.IMP)
+          .replace(/=>/g, SYMBOLS.IMP)
+          .replace(/&&/g, SYMBOLS.AND)
+          .replace(/\|\|/g, SYMBOLS.OR)
+          .replace(/[!~]/g, SYMBOLS.NOT);
+      }
+
+      function tokenize(input) {
+        const source = normalizeInput(input);
+        const tokens = [];
+        let index = 0;
+
+        while (index < source.length) {
+          const char = source[index];
+          const upperChar = char.toUpperCase();
+
+          if (/\s/.test(char)) {
+            index += 1;
+            continue;
+          }
+
+          if (/[pqr]/i.test(char)) {
+            tokens.push({ type: "VAR", value: char.toLowerCase() });
+            index += 1;
+            continue;
+          }
+
+          if (upperChar === "V" || upperChar === "F" || upperChar === "T") {
+            tokens.push({ type: "BOOL", value: upperChar !== "F" });
+            index += 1;
+            continue;
+          }
+
+          if (char === SYMBOLS.NOT) {
+            tokens.push({ type: OPERATORS.NOT, value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === SYMBOLS.AND) {
+            tokens.push({ type: OPERATORS.AND, value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === SYMBOLS.OR) {
+            tokens.push({ type: OPERATORS.OR, value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === SYMBOLS.IMP) {
+            tokens.push({ type: OPERATORS.IMP, value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === SYMBOLS.IFF) {
+            tokens.push({ type: OPERATORS.IFF, value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === "(") {
+            tokens.push({ type: "LPAREN", value: char });
+            index += 1;
+            continue;
+          }
+
+          if (char === ")") {
+            tokens.push({ type: "RPAREN", value: char });
+            index += 1;
+            continue;
+          }
+
+          throw new Error(`Simbolo no valido: ${char}`);
+        }
+
+        return tokens;
+      }
+
+      function toRpn(tokens) {
+        const output = [];
+        const operators = [];
+        const isOperator = (token) => Object.values(OPERATORS).includes(token.type);
+
+        for (const token of tokens) {
+          if (token.type === "VAR" || token.type === "BOOL") {
+            output.push(token);
+            continue;
+          }
+
+          if (isOperator(token)) {
+            while (operators.length > 0) {
+              const top = operators[operators.length - 1];
+              if (!isOperator(top)) {
+                break;
+              }
+
+              const isRightAssociative =
+                token.type === OPERATORS.NOT || token.type === OPERATORS.IMP;
+              const shouldPop = isRightAssociative
+                ? PRECEDENCE[top.type] > PRECEDENCE[token.type]
+                : PRECEDENCE[top.type] >= PRECEDENCE[token.type];
+
+              if (!shouldPop) {
+                break;
+              }
+
+              output.push(operators.pop());
+            }
+
+            operators.push(token);
+            continue;
+          }
+
+          if (token.type === "LPAREN") {
+            operators.push(token);
+            continue;
+          }
+
+          if (token.type === "RPAREN") {
+            while (
+              operators.length > 0 &&
+              operators[operators.length - 1].type !== "LPAREN"
+            ) {
+              output.push(operators.pop());
+            }
+
+            if (operators.length === 0) {
+              throw new Error("Parentesis desbalanceados.");
+            }
+
+            operators.pop();
+          }
+        }
+
+        while (operators.length > 0) {
+          const token = operators.pop();
+          if (token.type === "LPAREN" || token.type === "RPAREN") {
+            throw new Error("Parentesis desbalanceados.");
+          }
+          output.push(token);
+        }
+
+        return output;
+      }
+
+      function rpnToAst(rpn) {
+        const stack = [];
+
+        for (const token of rpn) {
+          if (token.type === "VAR") {
+            stack.push({ kind: "VAR", name: token.value });
+            continue;
+          }
+
+          if (token.type === "BOOL") {
+            stack.push({ kind: "BOOL", value: token.value });
+            continue;
+          }
+
+          if (token.type === OPERATORS.NOT) {
+            const node = stack.pop();
+            if (!node) {
+              throw new Error("Falta un operando para la negacion.");
+            }
+            stack.push({ kind: "NOT", expr: node });
+            continue;
+          }
+
+          const right = stack.pop();
+          const left = stack.pop();
+
+          if (!left || !right) {
+            throw new Error("Faltan operandos en la formula.");
+          }
+
+          stack.push({ kind: token.type, left, right });
+        }
+
+        if (stack.length !== 1) {
+          throw new Error("La formula no quedo bien formada.");
+        }
+
+        return stack[0];
+      }
+
+      function parseFormula(input) {
+        return rpnToAst(toRpn(tokenize(input)));
+      }
+
+      function boolText(value) {
+        return value ? "V" : "F";
+      }
+
+      function nodeToString(node) {
+        switch (node.kind) {
+          case "VAR":
+            return node.name;
+          case "BOOL":
+            return boolText(node.value);
+          case "NOT": {
+            const inner =
+              node.expr.kind === "VAR" || node.expr.kind === "BOOL"
+                ? nodeToString(node.expr)
+                : `(${nodeToString(node.expr)})`;
+            return `${SYMBOLS.NOT}${inner}`;
+          }
+          case "AND":
+            return `(${nodeToString(node.left)} ${SYMBOLS.AND} ${nodeToString(node.right)})`;
+          case "OR":
+            return `(${nodeToString(node.left)} ${SYMBOLS.OR} ${nodeToString(node.right)})`;
+          case "IMP":
+            return `(${nodeToString(node.left)} ${SYMBOLS.IMP} ${nodeToString(node.right)})`;
+          case "IFF":
+            return `(${nodeToString(node.left)} ${SYMBOLS.IFF} ${nodeToString(node.right)})`;
+          default:
+            return "";
+        }
+      }
+
+      function substituteVariables(node, values) {
+        switch (node.kind) {
+          case "VAR":
+            return { kind: "BOOL", value: values[node.name] };
+          case "BOOL":
+            return node;
+          case "NOT":
+            return { kind: "NOT", expr: substituteVariables(node.expr, values) };
+          default:
+            return {
+              kind: node.kind,
+              left: substituteVariables(node.left, values),
+              right: substituteVariables(node.right, values),
+            };
+        }
+      }
+
+      function isBoolNode(node) {
+        return node.kind === "BOOL";
+      }
+
+      function evaluateOperator(kind, left, right) {
+        if (kind === "AND") {
+          return left && right;
+        }
+        if (kind === "OR") {
+          return left || right;
+        }
+        if (kind === "IMP") {
+          return !left || right;
+        }
+        if (kind === "IFF") {
+          return left === right;
+        }
+        throw new Error("Operador invalido.");
+      }
+
+      function reduceOneStep(node) {
+        if (node.kind === "BOOL" || node.kind === "VAR") {
+          return null;
+        }
+
+        if (node.kind === "NOT") {
+          if (isBoolNode(node.expr)) {
+            return { kind: "BOOL", value: !node.expr.value };
+          }
+
+          const reducedInner = reduceOneStep(node.expr);
+          if (!reducedInner) {
+            return null;
+          }
+
+          return { kind: "NOT", expr: reducedInner };
+        }
+
+        if (!isBoolNode(node.left)) {
+          const reducedLeft = reduceOneStep(node.left);
+          if (reducedLeft) {
+            return { ...node, left: reducedLeft };
+          }
+        }
+
+        if (!isBoolNode(node.right)) {
+          const reducedRight = reduceOneStep(node.right);
+          if (reducedRight) {
+            return { ...node, right: reducedRight };
+          }
+        }
+
+        if (isBoolNode(node.left) && isBoolNode(node.right)) {
+          return {
+            kind: "BOOL",
+            value: evaluateOperator(node.kind, node.left.value, node.right.value),
+          };
+        }
+
+        return null;
+      }
+
+      function evaluateWithSteps(ast, values) {
+        const substituted = substituteVariables(ast, values);
+        const steps = [
+          { label: "Formula original", expr: nodeToString(ast) },
+          { label: "Reemplazo de variables", expr: nodeToString(substituted) },
+        ];
+
+        let current = substituted;
+        while (!isBoolNode(current)) {
+          const next = reduceOneStep(current);
+          if (!next) {
+            break;
+          }
+          current = next;
+          steps.push({ label: "Simplificacion", expr: nodeToString(current) });
+        }
+
+        if (!isBoolNode(current)) {
+          throw new Error("No se pudo resolver completamente la formula.");
+        }
+
+        return { result: current.value, steps };
+      }
+
+      function collectVariables(node, found = new Set()) {
+        if (node.kind === "VAR") {
+          found.add(node.name);
+          return found;
+        }
+
+        if (node.kind === "NOT") {
+          return collectVariables(node.expr, found);
+        }
+
+        if (node.kind !== "BOOL") {
+          collectVariables(node.left, found);
+          collectVariables(node.right, found);
+        }
+
+        return found;
+      }
+
+      function buildAssignments(variables, index = 0, current = {}, rows = []) {
+        if (index === variables.length) {
+          rows.push({ ...current });
+          return rows;
+        }
+
+        const variable = variables[index];
+        current[variable] = true;
+        buildAssignments(variables, index + 1, current, rows);
+        current[variable] = false;
+        buildAssignments(variables, index + 1, current, rows);
+        delete current[variable];
+        return rows;
+      }
+
+      function truthTable(ast) {
+        const variables = Array.from(collectVariables(ast)).sort();
+        const assignments = buildAssignments(variables);
+
+        return {
+          variables,
+          rows: assignments.map((assignment) => ({
+            ...assignment,
+            result: evaluateWithSteps(ast, assignment).result,
+          })),
+        };
+      }
+
+      function renderSteps(steps) {
+        return `
+          <div class="step-list">
+            ${steps
+              .map(
+                (step, index) => `
+                  <article class="step">
+                    <small>Paso ${index + 1} - ${step.label}</small>
+                    <strong>${escapeHtml(step.expr)}</strong>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>
+        `;
+      }
+
+      function renderTruthTable(table) {
+        const head = table.variables
+          .map((variable) => `<th>${escapeHtml(variable)}</th>`)
+          .join("");
+
+        const rows = table.rows
+          .map(
+            (row) => `
+              <tr>
+                ${table.variables
+                  .map((variable) => `<td>${boolText(row[variable])}</td>`)
+                  .join("")}
+                <td>${boolText(row.result)}</td>
+              </tr>
+            `
+          )
+          .join("");
+
+        return `
+          <table>
+            <thead>
+              <tr>
+                ${head}
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function render() {
+        try {
+          const ast = parseFormula(elements.formula.value);
+          const values = {
+            p: elements.p.value === "V",
+            q: elements.q.value === "V",
+            r: elements.r.value === "V",
+          };
+
+          const evaluation = evaluateWithSteps(ast, values);
+          const table = truthTable(ast);
+
+          elements.resultArea.innerHTML = `
+            <div class="result-banner ${evaluation.result ? "good" : "bad"}">
+              <div>
+                <p class="result-label">Resultado final</p>
+                <p class="result-value">${boolText(evaluation.result)}</p>
+              </div>
+              <span class="badge">Formula valida</span>
+            </div>
+            ${renderSteps(evaluation.steps)}
+          `;
+          elements.statusBadge.textContent = "Actualizacion automatica";
+
+          if (showTable) {
+            elements.tableWrap.innerHTML = renderTruthTable(table);
+            elements.tableCard.hidden = false;
+          } else {
+            elements.tableCard.hidden = true;
+          }
+        } catch (error) {
+          elements.resultArea.innerHTML = `
+            <div class="error-box">
+              <strong>No pude interpretar la formula.</strong>
+              <span>${escapeHtml(error.message || "Error inesperado.")}</span>
+            </div>
+          `;
+          elements.statusBadge.textContent = "Revisa la formula";
+          if (showTable) {
+            elements.tableWrap.innerHTML = "";
+            elements.tableCard.hidden = false;
+          } else {
+            elements.tableCard.hidden = true;
+          }
+        }
+      }
+
+      function mountExamples() {
+        elements.exampleList.innerHTML = examples
+          .map(
+            (example) => `
+              <button class="chip" type="button" data-example="${encodeURIComponent(example)}">
+                ${escapeHtml(example)}
+              </button>
+            `
+          )
+          .join("");
+
+        elements.exampleList.querySelectorAll("[data-example]").forEach((button) => {
+          button.addEventListener("click", () => {
+            elements.formula.value = decodeURIComponent(button.dataset.example);
+            render();
+          });
+        });
+      }
+
+      function mountToolButtons() {
+        elements.toolGrid.innerHTML = toolButtons
+          .map((button) => {
+            if (button.type === "insert") {
+              return `
+                <button
+                  class="tool-button"
+                  type="button"
+                  data-insert="${encodeURIComponent(button.value)}"
+                >
+                  <strong>${escapeHtml(button.label)}</strong>
+                  <span>${escapeHtml(button.detail)}</span>
+                </button>
+              `;
+            }
+
+            return `
+              <button
+                class="tool-button tool-button--action"
+                type="button"
+                data-action="${button.action}"
+              >
+                <strong>${escapeHtml(button.label)}</strong>
+                <span>${escapeHtml(button.detail)}</span>
+              </button>
+            `;
+          })
+          .join("");
+
+        elements.toolGrid.querySelectorAll("[data-insert], [data-action]").forEach((button) => {
+          button.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+          });
+
+          button.addEventListener("click", () => {
+            if (button.dataset.insert) {
+              insertAtCursor(decodeURIComponent(button.dataset.insert));
+              return;
+            }
+
+            if (button.dataset.action === "backspace") {
+              backspaceAtCursor();
+              return;
+            }
+
+            if (button.dataset.action === "clear") {
+              clearFormula();
+            }
+          });
+        });
+      }
+
+      elements.formula.addEventListener("input", () => {
+        saveFormulaSelection();
+        render();
+      });
+      elements.formula.addEventListener("click", saveFormulaSelection);
+      elements.formula.addEventListener("keyup", saveFormulaSelection);
+      elements.formula.addEventListener("select", saveFormulaSelection);
+      elements.formula.addEventListener("focus", saveFormulaSelection);
+      elements.p.addEventListener("change", render);
+      elements.q.addEventListener("change", render);
+      elements.r.addEventListener("change", render);
+
+      elements.toggleTable.addEventListener("click", () => {
+        showTable = !showTable;
+        elements.toggleTable.textContent = showTable
+          ? "Ocultar tabla de verdad"
+          : "Mostrar tabla de verdad";
+        render();
+      });
+
+      elements.formula.value = `(p ${SYMBOLS.AND} q) ${SYMBOLS.IMP} r`;
+      saveFormulaSelection();
+      mountExamples();
+      mountToolButtons();
+      render();
+    </script>
+  </body>
+</html>
